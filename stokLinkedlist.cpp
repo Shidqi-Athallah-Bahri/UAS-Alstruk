@@ -53,7 +53,7 @@ void kurangiStok(string namaMenu){
         while (cur != NULL){
             if (cur->namaMenu == namaMenu){
                 cur->jumlahStok--;
-                cout << "Stok berhasil dikurangi" << endl;
+                cout << "Stok dikurangi" << endl;
                 return;
             }
             cur = cur->next;
