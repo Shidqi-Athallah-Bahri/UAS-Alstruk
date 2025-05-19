@@ -4,21 +4,21 @@ using namespace std;
 
 // Struktur untuk data Pelanggan
 struct Customer {
-    string name;        // Nama pelanggan
-    string order;      // Nama menu yang dipesan
-    int queueNumber;   // Nomor antrian pelanggan
-    int quantity;      // Jumlah pesanan
+    string nama;        // Nama pelanggan
+    string pesanan;    // Nama menu yang dipesan
+    int nomorAntrian;  // Nomor antrian pelanggan
+    int jumlah;        // Jumlah pesanan
     Customer* next;    // Pointer ke pelanggan berikutnya
 };
 
-// Struktur untuk Queue
+// Struktur untuk Antrian
 struct Queue {
-    Customer* front;    // Pointer ke pelanggan di depan antrian
-    Customer* rear;     // Pointer ke pelanggan di belakang antrian
-    int currentQueueNumber; // Nomor antrian saat ini
+    Customer* depan;    // Pointer ke pelanggan di depan antrian
+    Customer* belakang; // Pointer ke pelanggan di belakang antrian
+    int nomorAntrianSaatIni; // Nomor antrian saat ini
 };
 
-// Struktur untuk Menu Merchant
+// Struktur untuk Menu Kantin
 struct menuMerchant {
     string namaMenu;    // Nama menu
     int jumlahStok;     // Jumlah stok menu
@@ -27,46 +27,49 @@ struct menuMerchant {
 
 menuMerchant *head, *tail, *cur; // Pointer global untuk linked list menu
 
-// Fungsi untuk menginisialisasi queue
+// Fungsi untuk menginisialisasi antrian
 // Parameter: q (referensi ke struktur Queue)
-// Output: Mengatur front, rear, dan currentQueueNumber ke nilai awal
+// Output: Mengatur depan, belakang, dan nomorAntrianSaatIni ke nilai awal
 void initQueue(Queue &q) {
-    q.front = nullptr;
-    q.rear = nullptr;
-    q.currentQueueNumber = 0; // Nomor antrian dimulai dari 0
+    q.depan = nullptr;
+    q.belakang = nullptr;
+    q.nomorAntrianSaatIni = 0; // Nomor antrian dimulai dari 0
 }
 
-// Fungsi untuk memeriksa apakah queue kosong
-// Return: true jika queue kosong, false jika tidak
+// Fungsi untuk memeriksa apakah antrian kosong
+// Parameter: q (struktur Queue)
+// Return: true jika antrian kosong, false jika tidak
 bool isEmpty(Queue q) {
-    return q.front == nullptr;
+    return q.depan == nullptr;
 }
 
 // Fungsi untuk menambahkan pelanggan ke antrian
+// Parameter: q (referensi ke Queue), nama (nama pelanggan), pesanan (nama menu), jumlah (jumlah pesanan)
 // Output: Menambahkan pelanggan ke antrian dengan nomor antrian otomatis
-void enqueue(Queue &q, string name, string order, int quantity) {
-    Customer* newCustomer = new Customer;
-    newCustomer->name = name;
-    newCustomer->order = order;
-    newCustomer->quantity = quantity;
-    newCustomer->queueNumber = ++q.currentQueueNumber; // Increment nomor antrian
-    newCustomer->next = nullptr;
+void enqueue(Queue &q, string nama, string pesanan, int jumlah) {
+    Customer* pelangganBaru = new Customer;
+    pelangganBaru->nama = nama;
+    pelangganBaru->pesanan = pesanan;
+    pelangganBaru->jumlah = jumlah;
+    pelangganBaru->nomorAntrian = ++q.nomorAntrianSaatIni; // Increment nomor antrian
+    pelangganBaru->next = nullptr;
 
-    // Jika queue kosong, pelanggan menjadi front dan rear
+    // Jika antrian kosong, pelanggan menjadi depan dan belakang
     if (isEmpty(q)) {
-        q.front = newCustomer;
-        q.rear = newCustomer;
+        q.depan = pelangganBaru;
+        q.belakang = pelangganBaru;
     } else {
         // Tambahkan pelanggan di belakang antrian
-        q.rear->next = newCustomer;
-        q.rear = newCustomer;
+        q.belakang->next = pelangganBaru;
+        q.belakang = pelangganBaru;
     }
     
-    cout << "Pelanggan " << name << " ditambahkan ke antrian dengan nomor " 
-         << newCustomer->queueNumber << " (Pesanan: " << order << ", Jumlah: " << quantity << ")" << endl;
+    cout << "Pelanggan " << nama << " ditambahkan ke antrian dengan nomor " 
+         << pelangganBaru->nomorAntrian << " (Pesanan: " << pesanan << ", Jumlah: " << jumlah << ")" << endl;
 }
 
 // Fungsi untuk mengeluarkan pelanggan dari antrian
+// Parameter: q (referensi ke Queue)
 // Output: Menghapus pelanggan dari depan antrian dan menampilkan informasi
 void dequeue(Queue &q) {
     if (isEmpty(q)) {
@@ -74,20 +77,21 @@ void dequeue(Queue &q) {
         return;
     }
 
-    Customer* temp = q.front;
-    cout << "Pelanggan " << temp->name << " dengan nomor antrian " 
-         << temp->queueNumber << " telah dilayani." << endl;
+    Customer* temp = q.depan;
+    cout << "Pelanggan " << temp->nama << " dengan nomor antrian " 
+         << temp->nomorAntrian << " telah dilayani." << endl;
 
-    q.front = q.front->next;
+    q.depan = q.depan->next;
     delete temp;
 
-    // Jika queue menjadi kosong, atur rear ke nullptr
-    if (q.front == nullptr) {
-        q.rear = nullptr;
+    // Jika antrian menjadi kosong, atur belakang ke nullptr
+    if (q.depan == nullptr) {
+        q.belakang = nullptr;
     }
 }
 
 // Fungsi untuk menampilkan daftar pelanggan yang sedang mengantri
+// Parameter: q (struktur Queue)
 // Output: Menampilkan nomor antrian, nama, pesanan, dan jumlah untuk setiap pelanggan
 void displayQueue(Queue q) {
     if (isEmpty(q)) {
@@ -97,18 +101,19 @@ void displayQueue(Queue q) {
 
     cout << "\nDaftar Antrian Pelanggan:" << endl;
     cout << "------------------------" << endl;
-    Customer* current = q.front;
+    Customer* current = q.depan;
     while (current != nullptr) {
-        cout << "Nomor Antrian: " << current->queueNumber << endl;
-        cout << "Nama: " << current->name << endl;
-        cout << "Pesanan: " << current->order << endl;
-        cout << "Jumlah: " << current->quantity << endl;
+        cout << "Nomor Antrian: " << current->nomorAntrian << endl;
+        cout << "Nama: " << current->nama << endl;
+        cout << "Pesanan: " << current->pesanan << endl;
+        cout << "Jumlah: " << current->jumlah << endl;
         cout << "------------------------" << endl;
         current = current->next;
     }
 }
 
 // Fungsi untuk membuat linked list menu pertama kali
+// Parameter: namaMenu (nama menu), jumlahStok (stok awal)
 // Output: Membuat node pertama dari linked list menu
 void createMenu(string namaMenu, int jumlahStok) {
     head = new menuMerchant;
@@ -119,6 +124,7 @@ void createMenu(string namaMenu, int jumlahStok) {
 }
 
 // Fungsi untuk menambah menu baru ke linked list
+// Parameter: namaMenu (nama menu), jumlahStok (stok awal)
 // Output: Menambahkan node menu baru di akhir linked list
 void addMenu(string namaMenu, int jumlahStok) {
     menuMerchant *newMenu = new menuMerchant;
@@ -131,12 +137,13 @@ void addMenu(string namaMenu, int jumlahStok) {
 }
 
 // Fungsi untuk memeriksa ketersediaan stok menu
+// Parameter: namaMenu (nama menu), jumlah (jumlah yang diperlukan)
 // Return: true jika stok cukup, false jika tidak
-bool cekStok(string namaMenu, int quantity) {
+bool cekStok(string namaMenu, int jumlah) {
     cur = head;
     while (cur != nullptr) {
         if (cur->namaMenu == namaMenu) {
-            return cur->jumlahStok >= quantity; // Periksa apakah stok cukup
+            return cur->jumlahStok >= jumlah; // Periksa apakah stok cukup
         }
         cur = cur->next;
     }
@@ -144,14 +151,15 @@ bool cekStok(string namaMenu, int quantity) {
 }
 
 // Fungsi untuk mengurangi stok menu
+// Parameter: namaMenu (nama menu), jumlah (jumlah yang dipesan)
 // Output: Mengurangi stok jika tersedia, menampilkan pesan error jika tidak
-void kurangiStok(string namaMenu, int quantity) {
-    if (cekStok(namaMenu, quantity)) {
+void kurangiStok(string namaMenu, int jumlah) {
+    if (cekStok(namaMenu, jumlah)) {
         cur = head;
         while (cur != nullptr) {
             if (cur->namaMenu == namaMenu) {
-                cur->jumlahStok -= quantity;
-                cout << "Stok " << namaMenu << " berhasil dikurangi sebanyak " << quantity << endl;
+                cur->jumlahStok -= jumlah;
+                cout << "Stok " << namaMenu << " berhasil dikurangi sebanyak " << jumlah << endl;
                 return;
             }
             cur = cur->next;
@@ -162,6 +170,7 @@ void kurangiStok(string namaMenu, int quantity) {
 }
 
 // Fungsi untuk menampilkan semua menu
+// Parameter: Tidak ada
 // Output: Menampilkan daftar menu dengan nomor dan stok
 void displayMenu() {
     cur = head;
@@ -180,23 +189,24 @@ void displayMenu() {
 }
 
 // Fungsi untuk input data pelanggan
+// Parameter: q (referensi ke Queue)
 // Output: Meminta nama, pilihan menu, dan jumlah pesanan, lalu menambah ke antrian jika valid
 void inputCustomer(Queue &q) {
-    string name;
-    int menuChoice, quantity;
+    string nama;
+    int pilihanMenu, jumlah;
     
     cout << "Masukkan nama pelanggan: ";
     cin.ignore(1, '\n'); // Bersihkan buffer untuk getline
-    getline(cin, name);
+    getline(cin, nama);
     
     displayMenu();
     cout << "Pilih nomor menu: ";
-    cin >> menuChoice;
+    cin >> pilihanMenu;
     cout << "Masukkan jumlah pesanan: ";
-    cin >> quantity;
+    cin >> jumlah;
 
     // Validasi jumlah pesanan
-    if (quantity <= 0) {
+    if (jumlah <= 0) {
         cout << "Jumlah pesanan harus lebih dari 0!" << endl;
         return;
     }
@@ -204,39 +214,40 @@ void inputCustomer(Queue &q) {
     // Mendapatkan nama menu berdasarkan pilihan
     cur = head;
     int index = 1;
-    string selectedMenu;
-    bool menuFound = false;
+    string menuTerpilih;
+    bool menuDitemukan = false;
 
     while (cur != nullptr) {
-        if (index == menuChoice) {
-            selectedMenu = cur->namaMenu;
-            menuFound = true;
+        if (index == pilihanMenu) {
+            menuTerpilih = cur->namaMenu;
+            menuDitemukan = true;
             break;
         }
         cur = cur->next;
         index++;
     }
 
-    if (!menuFound) {
+    if (!menuDitemukan) {
         cout << "Pilihan menu tidak valid!" << endl;
         return;
     }
 
     // Periksa stok dan proses pesanan
-    if (cekStok(selectedMenu, quantity)) {
-        enqueue(q, name, selectedMenu, quantity);
-        kurangiStok(selectedMenu, quantity);
+    if (cekStok(menuTerpilih, jumlah)) {
+        enqueue(q, nama, menuTerpilih, jumlah);
+        kurangiStok(menuTerpilih, jumlah);
     } else {
-        cout << "Maaf, stok " << selectedMenu << " tidak cukup untuk " << quantity << " pesanan!" << endl;
+        cout << "Maaf, stok " << menuTerpilih << " tidak cukup untuk " << jumlah << " pesanan!" << endl;
     }
 }
 
 // Fungsi untuk menampilkan menu utama
+// Parameter: Tidak ada
 // Output: Menampilkan opsi sistem antrian
 void showMenu() {
     cout << "\nSistem Antrian Kantin" << endl;
     cout << "1. Tambah Pelanggan ke Antrian" << endl;
-    cout << "2. Layani Pelanggan (Dequeue)" << endl;
+    cout << "2. Layani Pelanggan" << endl;
     cout << "3. Tampilkan Antrian" << endl;
     cout << "4. Tampilkan Daftar Menu" << endl;
     cout << "5. Keluar" << endl;
@@ -254,12 +265,12 @@ int main() {
     addMenu("Rice Bowl", 0);
     addMenu("Air Putih", 8);
 
-    int choice;
+    int pilihan;
     do {
         showMenu();
-        cin >> choice;
+        cin >> pilihan;
 
-        switch (choice) {
+        switch (pilihan) {
             case 1:
                 inputCustomer(q);
                 break;
@@ -278,7 +289,7 @@ int main() {
             default:
                 cout << "Pilihan tidak valid!" << endl;
         }
-    } while (choice != 5);
+    } while (pilihan != 5);
 
     // Membersihkan memori antrian
     while (!isEmpty(q)) {
