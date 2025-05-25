@@ -142,6 +142,47 @@ void addMenu(string namaMenu, int jumlahStok) {
     tail = newMenu;
 }
 
+void DeleteMenu(string namaMenu){
+
+    cur = head;
+    menuMerchant *prev = NULL;
+
+    while (cur != NULL){
+        if (cur->namaMenu == namaMenu){
+            if (prev == NULL) {
+                head = cur->next; // Hapus dari awal
+            } else {
+                prev->next = cur->next; // Hapus dari tengah atau akhir
+            }
+            delete cur; // Hapus node
+            cout << "Menu " << namaMenu << " telah dihapus." << endl;
+            return;
+        }
+        prev = cur;
+        cur = cur->next;
+    }
+    cout << "Menu " << namaMenu << " tidak ditemukan." << endl;
+    return;
+}
+
+void tambahMenu(){
+    string namaMenu;
+    int jumlahStok;
+    cout << "Masukkan nama menu: ";
+    cin >> namaMenu;
+    cout << "Masukkan jumlah stok: ";
+    cin >> jumlahStok;
+
+    addMenu(namaMenu, jumlahStok);
+}
+
+void hapusMenu(){
+    string namaMenu;
+    cout << "Masukkan nama menu yang ingin dihapus: ";
+    cin.ignore(); // Mengabaikan newline karakter sebelumnya
+    getline(cin, namaMenu); // Menggunakan getline untuk menangani spasi
+    DeleteMenu(namaMenu);
+}
 
 
 // Fungsi untuk memeriksa ketersediaan stok menu
@@ -306,12 +347,13 @@ int main() {
                 cin >> subPilihan;
                 switch (subPilihan) {
                     case 1:
-                        cout << "Fitur Tambah Menu belum diimplementasikan." << endl;
+                        cout << "Tambah Menu" << endl;
+                        tambahMenu();
                         // Gunakan fungsi addMenu(namaMenu, jumlahStok) untuk implementasi
                         break;
                     case 2:
-                        cout << "Fitur Hapus Menu belum diimplementasikan." << endl;
-                        // Perlu fungsi baru untuk menghapus menu dari linked list
+                        cout << "Hapus Menu" << endl;
+                        hapusMenu();
                         break;
                     case 3:
                         break;
