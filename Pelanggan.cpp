@@ -503,142 +503,160 @@ void MenuPelanggan() {
     cout << "1. Merchant 1" << endl;
     cout << "2. Merchant 2" << endl;
     cout << "3. Kembali ke Menu Utama" << endl << endl;
+    cout << "Pilih Menu (1-3): ";
 }
+
+
+
+
+// Fungsi untuk mengelola menu (Tambah, Ubah)
+void manageMenu(int merchantPilihan) {
+    string namaMenu;
+    int subPilihan;
+    do {
+        displayMenu(merchantPilihan == 1 ? head1 : head2);
+        cout << "\nSub-Menu Daftar Menu:" << endl;
+        cout << "1. Tambah Menu" << endl;
+        cout << "2. Ubah Menu" << endl;
+        cout << "3. Kembali ke Menu Utama" << endl;
+        cout << "Pilih opsi (1-2): ";
+        cin >> subPilihan;
+
+        switch (subPilihan) {
+            case 1:
+                if (merchantPilihan == 1) {
+                    tambahMenu(head1, tail1);
+                } else {
+                    tambahMenu(head2, tail2);
+                }
+                break;
+            case 2:
+                cout << "Masukkan Nama Menu: " << endl;
+                cin.ignore(1, '\n');
+                getline(cin, namaMenu);
+                if (merchantPilihan == 1 && cekMenu(head1, namaMenu)) {
+                    ubahMenu(head1, tail1, namaMenu); // Stok merchant pertama
+                } else if (merchantPilihan == 2 && cekMenu(head2, namaMenu)) {
+                    ubahMenu(head2, tail2, namaMenu); // Stok merchant kedua
+                } else {
+                    cout << "Menu tidak ditemukan" << endl;
+                }
+                break;
+            default:
+                cout << "Pilihan tidak valid!" << endl;
+        }
+    } while (subPilihan != 3);
+}
+
+// Menu utama untuk Merchant
+void merchantMenu(Queue& q, int merchantPilihan) {
+    int pilihan;
+    do {
+        showMenu();
+        cin >> pilihan;
+
+        switch (pilihan) {
+            case 1:
+                if (merchantPilihan == 1)
+                    inputCustomer(q);  // Pemesanan untuk Merchant 1
+                else
+                    inputCustomer2(q); // Pemesanan untuk Merchant 2
+                break;
+            case 2:
+                dequeue(q);
+                break;
+            case 3:
+                displayQueue(q);
+                break;
+            case 4:
+                manageMenu(merchantPilihan);
+                break;
+            case 5:
+                displayHistory();
+                break;
+            case 6:
+                cout << "Terima Kasih" << endl;
+                break;
+            default:
+                cout << "Pilihan tidak valid!" << endl;
+        }
+    } while (pilihan != 6);
+}
+
+// Menu untuk Pelanggan
+void MenuPelanggan(Queue& q) {
+    int pilihanMerchant;
+    do {
+        MenuPelanggan();  // Menampilkan menu untuk memilih merchant
+        cin >> pilihanMerchant;
+
+        switch (pilihanMerchant) {
+            case 1:
+                inputCustomer(q);  // Pemesanan untuk Merchant 1
+                break;
+            case 2:
+                inputCustomer2(q); // Pemesanan untuk Merchant 2
+                break;
+            case 3:
+                cout << "Kembali ke menu utama." << endl;
+                return; // Kembali ke menu utama
+            default:
+                cout << "Pilihan tidak valid!" << endl;
+        }
+    } while (pilihanMerchant != 3);
+}
+
+// Fungsi untuk membersihkan memori menu
+void clearMenu(menuMerchant* &head) {
+    while (head != nullptr) {
+        menuMerchant* temp = head;
+        head = head->next;
+        delete temp;
+    }
+}
+
 
 // Fungsi utama
 int main() {
     Queue q;
     initQueue(q);
 
-    // Inisialisasi daftar menu
+    // Menambahkan menu untuk Merchant 1 dan Merchant 2
+    addMenu(head1, tail1, "Rice Bowl", 0, 13000);
+    addMenu(head1, tail1, "Air Putih", 8, 3000);
+    addMenu(head1, tail1, "Soto Sapi", 9, 12000);
+    addMenu(head1, tail1, "Soto Ayam", 100, 12000);
+    addMenu(head1, tail1, "Soto Babi", 12, 12000);
 
-    addMenu(head1,tail1, "Rice Bowl", 0, 13000);
-    addMenu(head1,tail1, "Air Putih", 8, 3000);
-    addMenu(head1,tail1, "Soto Sapi", 9, 12000);
-    addMenu(head1,tail1, "Soto Ayam", 100, 12000);
-    addMenu(head1,tail1, "Soto Babi", 12, 12000);
-
-    addMenu(head2,tail2, "Babi Guling", 10, 15000);
+    addMenu(head2, tail2, "Babi Guling", 10, 15000);
     addMenu(head2, tail2, "Ayam Panggang", 6, 12000);
-
 
     int merchantPilihan;
     menuMerchant* head = nullptr;
     menuMerchant* tail = nullptr;
 
-    cout << "=== Masuk Sebagai ===" << endl;
-    cout << "1. Merchant 1" << endl;
-    cout << "2. Merchant 2" << endl;
-    cout << "3. Pelanggan" << endl;
-    cout << "Pilihan: ";
-    cin >> merchantPilihan;
+    while (true) {
+        cout << "=== Masuk Sebagai ===" << endl;
+        cout << "1. Merchant 1" << endl;
+        cout << "2. Merchant 2" << endl;
+        cout << "3. Pelanggan" << endl;
+        cout << "Pilihan: ";
+        cin >> merchantPilihan;
 
-    if (merchantPilihan == 1) {
-    head = head1;
-    tail = tail1;
-} else if (merchantPilihan == 2) {
-    head = head2;
-    tail = tail2;
-} else if (merchantPilihan == 3) {
-    int pilihanMerchant;
-    do {
-        MenuPelanggan();  // Menampilkan menu untuk memilih merchant
-        cin >> pilihanMerchant;
-
-        if (pilihanMerchant == 1) {
+        if (merchantPilihan == 1) {
             head = head1;
             tail = tail1;
-            inputCustomer(q); // Pemesanan untuk Merchant 1
-            break;  // Setelah pemesanan, keluar dari loop dan kembali ke menu utama
-        } else if (pilihanMerchant == 2) {
+            merchantMenu(q, 1);  // Menu untuk Merchant 1
+        } else if (merchantPilihan == 2) {
             head = head2;
             tail = tail2;
-            inputCustomer2(q); // Pemesanan untuk Merchant 2
-            break;  // Setelah pemesanan, keluar dari loop dan kembali ke menu utama
-        } else if (pilihanMerchant == 3) {
-            cout << "Kembali ke menu utama." << endl;
-            break;  // Kembali ke menu utama tanpa pemesanan
+            merchantMenu(q, 2);  // Menu untuk Merchant 2
+        } else if (merchantPilihan == 3) {
+            MenuPelanggan(q);  // Menu untuk Pelanggan
         } else {
             cout << "Pilihan tidak valid!" << endl;
         }
-    } while (pilihanMerchant < 1 || pilihanMerchant > 3);
-
-    } else {
-        cout << "Pilihan tidak valid!" << endl;
-        return 0;
     }
-
-    if (merchantPilihan == 1 || merchantPilihan == 2) {
-        int pilihan;
-        do {
-            showMenu();
-            cin >> pilihan;
-
-            switch (pilihan) {
-                case 1:
-                if (merchantPilihan == 1)
-                {
-                    inputCustomer(q); // ini buat yang stok merchant pertama
-                }else{
-                    inputCustomer2(q);// ini buat yang stok merchant kedua
-                }
-                    break;
-                case 2:
-                    dequeue(q);
-                    break;
-                case 3:
-                    displayQueue(q);
-                    break;
-                case 4: {
-                    displayMenu(merchantPilihan == 1 ? head1 : head2);
-                    cout << "\nSub-Menu Daftar Menu:" << endl;
-                    cout << "1. Tambah Menu" << endl;
-                    cout << "2. Ubah Menu" << endl;
-                    cout << "3. Kembali ke Menu Utama" << endl;
-                    cout << "Pilih opsi (1-2): ";
-                    string namaMenu;
-                    int subPilihan;
-                    cin >> subPilihan;
-                    switch (subPilihan) {
-                        case 1:
-                            if(merchantPilihan == 1){
-                                tambahMenu(head1, tail1);
-                            }else {
-                                tambahMenu(head2, tail2);
-                            }
-                            
-                                break;
-
-                        case 2:
-                        cout << "Masukkan Nama Menu: " <<endl;
-                            cin.ignore(1, '\n');
-                            getline(cin, namaMenu);
-                        if(merchantPilihan == 1 && cekMenu(head1, namaMenu))
-                        {
-                            ubahMenu(head1, tail1, namaMenu); // ini buat stok merchant yang pertama
-                        }else if (merchantPilihan == 2 && cekMenu(head2, namaMenu)) {
-                            ubahMenu(head2, tail2, namaMenu); // ini buat yang kedua
-                        }else {
-                            cout << "Menu itu tidak ada" << endl;
-                        }
-                        break;
-                        default:
-                            cout << "Pilihan tidak valid!" << endl;
-                    }
-                    break;
-                }
-                case 5:
-                    displayHistory();
-                    break;
-                case 6:
-                    cout << "Terima Kasih" << endl;
-                    break;
-                default:
-                    cout << "Pilihan tidak valid!" << endl;
-            }
-        } while (pilihan != 6);
-    }
-    
 
     // Membersihkan memori antrian
     while (!isEmpty(q)) {
@@ -646,18 +664,8 @@ int main() {
     }
 
     // Membersihkan memori linked list menu
-    
-    while (head1 != nullptr) {
-        menuMerchant *temp = head1;
-        head1 = head1->next;
-        delete temp;
-    }
-
-     while (head2 != nullptr) {
-        menuMerchant *temp = head2;
-        head2 = head2->next;
-        delete temp;
-    }
+    clearMenu(head1);
+    clearMenu(head2);
 
     return 0;
 }
