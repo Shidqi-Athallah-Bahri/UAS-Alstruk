@@ -1,9 +1,58 @@
 #include <iostream>
 #include <string>
+#include <limits>
 using namespace std;
 
-// Struktur untuk data Pelanggan
-struct Customer {
+// Class untuk riwayat pesanan
+class OrderHistory {
+private:
+    string nama;
+    string pesanan;
+    int nomorAntrian;
+    int jumlah;
+    int totalHarga;
+    int uangDibayar;
+    int kembalian;
+    string merchant;
+
+public:
+    // Konstruktor default
+    OrderHistory()
+        : nama(""), pesanan(""), nomorAntrian(0), jumlah(0), totalHarga(0), uangDibayar(0), kembalian(0), merchant("") {}
+
+    // Konstruktor parameter
+    OrderHistory(const string& _nama, const string& _pesanan, int _nomorAntrian,
+                 int _jumlah, int _totalHarga, int _uangDibayar, int _kembalian, const string& _merchant)
+        : nama(_nama), pesanan(_pesanan), nomorAntrian(_nomorAntrian), jumlah(_jumlah),
+          totalHarga(_totalHarga), uangDibayar(_uangDibayar), kembalian(_kembalian), merchant(_merchant) {}
+
+    // Setter
+    void setData(const string& _nama, const string& _pesanan, int _nomorAntrian,
+                 int _jumlah, int _totalHarga, int _uangDibayar, int _kembalian, const string& _merchant) {
+        nama = _nama;
+        pesanan = _pesanan;
+        nomorAntrian = _nomorAntrian;
+        jumlah = _jumlah;
+        totalHarga = _totalHarga;
+        uangDibayar = _uangDibayar;
+        kembalian = _kembalian;
+        merchant = _merchant;
+    }
+
+    // Getters
+    string getNama() const { return nama; }
+    string getPesanan() const { return pesanan; }
+    int getNomorAntrian() const { return nomorAntrian; }
+    int getJumlah() const { return jumlah; }
+    int getTotalHarga() const { return totalHarga; }
+    int getUangDibayar() const { return uangDibayar; }
+    int getKembalian() const { return kembalian; }
+    string getMerchant() const { return merchant; }
+};
+
+// Class untuk pelanggan (node dalam queue)
+class Customer {
+public:
     string nama;
     string pesanan;
     int nomorAntrian;
@@ -12,659 +61,695 @@ struct Customer {
     int uangDibayar;
     int kembalian;
     Customer* next;
+
+    Customer(const string& _nama, const string& _pesanan, int _jumlah, int _totalHarga, int _uangDibayar, int _kembalian, int _nomor)
+        : nama(_nama), pesanan(_pesanan), jumlah(_jumlah), totalHarga(_totalHarga), uangDibayar(_uangDibayar), kembalian(_kembalian), nomorAntrian(_nomor), next(nullptr) {}
 };
 
-// Struktur untuk Antrian
-struct Queue {
+// Class untuk mengelola antrian pelanggan (Queue)
+class Queue {
+private:
     Customer* depan;
     Customer* belakang;
     int nomorAntrianSaatIni;
+
+public:
+    Queue() : depan(nullptr), belakang(nullptr), nomorAntrianSaatIni(0) {}
+
+    bool isEmpty() const {
+        return depan == nullptr;
+    }
+
+    void enqueue(const string& nama, const string& pesanan, int jumlah, int totalHarga, int uangDibayar, int kembalian) {
+        int nomor = ++nomorAntrianSaatIni;
+        Customer* pelangganBaru = new Customer(nama, pesanan, jumlah, totalHarga, uangDibayar, kembalian, nomor);
+        if (isEmpty()) {
+            depan = belakang = pelangganBaru;
+        } else {
+            belakang->next = pelangganBaru;
+            belakang = pelangganBaru;
+        }
+        cout << "Pelanggan " << nama << " ditambahkan ke antrian dengan nomor "
+             << pelangganBaru->nomorAntrian << endl;
+        cout << "Pesanan: " << pesanan << endl;
+        cout << "Jumlah: " << jumlah << endl;
+        cout << "Total: Rp" << totalHarga << endl;
+        cout << "Uang Dibayar: Rp" << uangDibayar << endl;
+        cout << "Kembalian: Rp" << kembalian << endl;
+    }
+
+    Customer* dequeue() {
+        if (isEmpty()) {
+            cout << "Antrian kosong!" << endl;
+            return nullptr;
+        }
+        Customer* temp = depan;
+        cout << "Pelanggan " << temp->nama << " dengan nomor antrian "
+             << temp->nomorAntrian << " telah dikonfirmasi." << endl;
+        depan = depan->next;
+        if (depan == nullptr) {
+            belakang = nullptr;
+        }
+        return temp; // Kembalikan untuk riwayat
+    }
+
+    void displayQueue() const {
+        if (isEmpty()) {
+            cout << "Antrian kosong!" << endl;
+            return;
+        }
+        cout << "\nDaftar Antrian Pelanggan:" << endl;
+        cout << "------------------------" << endl;
+        Customer* current = depan;
+        while (current != nullptr) {
+            cout << "Nomor " << current->nomorAntrian << endl;
+            cout << "Nama: " << current->nama << endl;
+            cout << "Pesanan: " << current->pesanan << endl;
+            cout << "Jumlah: " << current->jumlah << endl;
+            cout << "Total Harga: Rp" << current->totalHarga << endl;
+            cout << "Uang Dibayar: Rp" << current->uangDibayar << endl;
+            cout << "Kembalian: Rp" << current->kembalian << endl;
+            cout << "------------------------" << endl;
+            current = current->next;
+        }
+    }
+
+    void clear() {
+        while (!isEmpty()) {
+            Customer* temp = depan;
+            depan = depan->next;
+            delete temp;
+        }
+        belakang = nullptr;
+    }
 };
 
-// Struktur untuk Menu Kantin
-struct menuMerchant {
+// Node untuk menu
+class MenuNode {
+public:
     string namaMenu;
     int jumlahStok;
     int hargaMenu;
-    menuMerchant* next;
+    MenuNode* next;
+
+    MenuNode(const string& _nama, int _stok, int _harga)
+        : namaMenu(_nama), jumlahStok(_stok), hargaMenu(_harga), next(nullptr) {}
 };
 
-// Dua linked list untuk dua merchant
-menuMerchant *head1 = nullptr, *tail1 = nullptr;
-menuMerchant *head2 = nullptr, *tail2 = nullptr;
+// Class untuk mengelola daftar menu (LinkedList)
+class MenuList {
+private:
+    MenuNode* head;
+    MenuNode* tail;
 
-// Struktur untuk Riwayat Pesanan
-struct OrderHistory {
-    string nama;
-    string pesanan;
-    int nomorAntrian;
-    int jumlah;
-    int totalHarga;
-    int uangDibayar;
-    int kembalian;
-};
+public:
+    MenuList() : head(nullptr), tail(nullptr) {}
 
-// Deklarasi array untuk riwayat pesanan
-OrderHistory history[100];
-int historyCount = 0;
-
-// Inisialisasi antrian untuk setiap merchant
-Queue queue1, queue2;
-
-// Fungsi untuk menginisialisasi antrian
-void initQueue(Queue &q) {
-    q.depan = nullptr;
-    q.belakang = nullptr;
-    q.nomorAntrianSaatIni = 0;
-}
-
-// Fungsi untuk memeriksa apakah antrian kosong
-bool isEmpty(Queue q) {
-    return q.depan == nullptr;
-}
-
-// Fungsi untuk mencari harga menu
-int getMenuPrice(menuMerchant* head, string namaMenu) {
-    menuMerchant* current = head;
-    while (current != nullptr) {
-        if (current->namaMenu == namaMenu) {
-            return current->hargaMenu;
-        }
-        current = current->next;
-    }
-    return 0;
-}
-
-// Fungsi untuk mencari menu berdasarkan nomor
-menuMerchant* getMenuByNumber(menuMerchant* head, int nomor) {
-    int index = 1;
-    menuMerchant* current = head;
-    while (current != nullptr) {
-        if (index == nomor) {
-            return current;
-        }
-        current = current->next;
-        index++;
-    }
-    return nullptr;
-}
-
-// Fungsi untuk menambahkan pelanggan ke antrian
-void enqueue(Queue &q, string nama, string pesanan, int jumlah, int totalHarga, int uangDibayar, int kembalian) {
-    Customer* pelangganBaru = new Customer;
-    pelangganBaru->nama = nama;
-    pelangganBaru->pesanan = pesanan;
-    pelangganBaru->jumlah = jumlah;
-    pelangganBaru->totalHarga = totalHarga;
-    pelangganBaru->uangDibayar = uangDibayar;
-    pelangganBaru->kembalian = kembalian;
-    pelangganBaru->nomorAntrian = ++q.nomorAntrianSaatIni;
-    pelangganBaru->next = nullptr;
-
-    if (isEmpty(q)) {
-        q.depan = pelangganBaru;
-        q.belakang = pelangganBaru;
-    } else {
-        q.belakang->next = pelangganBaru;
-        q.belakang = pelangganBaru;
-    }
-
-    cout << "Pelanggan " << nama << " ditambahkan ke antrian dengan nomor "
-         << pelangganBaru->nomorAntrian << " (Pesanan: " << pesanan << ", Jumlah: " << jumlah
-         << ", Total: Rp" << totalHarga << ", Uang Dibayar: Rp" << uangDibayar
-         << ", Kembalian: Rp" << kembalian << ")" << endl;
-}
-
-// Fungsi untuk mengeluarkan pelanggan dari antrian dan mencatat riwayat
-void dequeue(Queue &q) {
-    if (isEmpty(q)) {
-        cout << "Antrian kosong!" << endl;
-        return;
-    }
-
-    Customer* temp = q.depan;
-    cout << "Pelanggan " << temp->nama << " dengan nomor antrian "
-         << temp->nomorAntrian << " telah dikonfirmasi." << endl;
-
-    // Simpan ke riwayat pesanan
-    if (historyCount < 100) {
-        history[historyCount].nama = temp->nama;
-        history[historyCount].pesanan = temp->pesanan;
-        history[historyCount].nomorAntrian = temp->nomorAntrian;
-        history[historyCount].jumlah = temp->jumlah;
-        history[historyCount].totalHarga = temp->totalHarga;
-        history[historyCount].uangDibayar = temp->uangDibayar;
-        history[historyCount].kembalian = temp->kembalian;
-        historyCount++;
-    } else {
-        cout << "Riwayat pesanan penuh!" << endl;
-    }
-
-    q.depan = q.depan->next;
-    delete temp;
-
-    if (q.depan == nullptr) {
-        q.belakang = nullptr;
-    }
-}
-
-// Fungsi untuk menampilkan daftar pelanggan yang sedang mengantri
-void displayQueue(Queue q) {
-    if (isEmpty(q)) {
-        cout << "Antrian kosong!" << endl;
-        return;
-    }
-
-    cout << "\nDaftar Antrian Pelanggan:" << endl;
-    cout << "------------------------" << endl;
-    Customer* current = q.depan;
-    while (current != nullptr) {
-        cout << "Nomor Antrian: " << current->nomorAntrian << endl;
-        cout << "Nama: " << current->nama << endl;
-        cout << "Pesanan: " << current->pesanan << endl;
-        cout << "Jumlah: " << current->jumlah << endl;
-        cout << "Total Harga: Rp" << current->totalHarga << endl;
-        cout << "Uang Dibayar: Rp" << current->uangDibayar << endl;
-        cout << "Kembalian: Rp" << current->kembalian << endl;
-        cout << "------------------------" << endl;
-        current = current->next;
-    }
-}
-
-// Fungsi untuk menambah menu baru ke linked list
-void addMenu(menuMerchant*& head, menuMerchant*& tail, string namaMenu, int jumlahStok, int hargaMenu) {
-    menuMerchant* newMenu = new menuMerchant{namaMenu, jumlahStok, hargaMenu, nullptr};
-
-    if (head == nullptr) {
-        head = tail = newMenu;
-    } else {
-        tail->next = newMenu;
-        tail = newMenu;
-    }
-}
-
-// Fungsi untuk menghapus menu
-void deleteMenu(menuMerchant*& head, string namaMenu) {
-    menuMerchant *cur = head, *prev = nullptr;
-    while (cur != nullptr) {
-        if (cur->namaMenu == namaMenu) {
-            if (prev == nullptr) {
-                head = cur->next;
-            } else {
-                prev->next = cur->next;
-            }
-            delete cur;
-            cout << "Menu " << namaMenu << " telah dihapus." << endl;
+    void addMenu(const string& namaMenu, int jumlahStok, int hargaMenu) {
+        if (jumlahStok <= 0 || hargaMenu <= 0) {
+            cout << "Stok dan harga harus lebih dari 0!" << endl;
             return;
         }
-        prev = cur;
-        cur = cur->next;
+        MenuNode* newMenu = new MenuNode(namaMenu, jumlahStok, hargaMenu);
+        if (head == nullptr) {
+            head = tail = newMenu;
+        } else {
+            tail->next = newMenu;
+            tail = newMenu;
+        }
+        cout << "Menu " << namaMenu << " ditambahkan." << endl;
     }
-    cout << "Menu " << namaMenu << " tidak ditemukan." << endl;
-}
 
-// Fungsi untuk memeriksa ketersediaan menu
-bool cekMenu(menuMerchant* head, string namaMenu) {
-    while (head != nullptr) {
-        if (head->namaMenu == namaMenu) return true;
-        head = head->next;
-    }
-    return false;
-}
-
-// Fungsi untuk memeriksa ketersediaan stok menu
-bool cekStok(menuMerchant* head, string namaMenu, int jumlah) {
-    while (head != nullptr) {
-        if (head->namaMenu == namaMenu) return head->jumlahStok >= jumlah;
-        head = head->next;
-    }
-    return false;
-}
-
-// Fungsi untuk mengurangi stok
-void kurangiStok(menuMerchant* head, string namaMenu, int jumlah) {
-    if (cekStok(head, namaMenu, jumlah)) {
-        while (head != nullptr) {
-            if (head->namaMenu == namaMenu) {
-                head->jumlahStok -= jumlah;
-                cout << "Stok " << namaMenu << " dikurangi sebanyak " << jumlah << endl;
+    void deleteMenu(const string& namaMenu) {
+        MenuNode* cur = head;
+        MenuNode* prev = nullptr;
+        while (cur != nullptr) {
+            if (cur->namaMenu == namaMenu) {
+                if (prev == nullptr) {
+                    head = cur->next;
+                } else {
+                    prev->next = cur->next;
+                }
+                if (cur == tail) {
+                    tail = prev;
+                }
+                delete cur;
+                cout << "Menu " << namaMenu << " telah dihapus." << endl;
                 return;
             }
-            head = head->next;
+            prev = cur;
+            cur = cur->next;
         }
-    } else {
-        cout << "Stok tidak cukup atau menu tidak ditemukan." << endl;
+        cout << "Menu " << namaMenu << " tidak ditemukan." << endl;
     }
-}
 
-// Fungsi untuk menambah stok menu
-void tambahStokMenu(menuMerchant* head, string namaMenu) {
-    menuMerchant* current = head;
-    while (current != nullptr) {
-        if (current->namaMenu == namaMenu) {
-            int tambah;
-            cout << "Masukkan jumlah stok yang ingin ditambah: ";
-            cin >> tambah;
-            if (tambah > 0) {
-                current->jumlahStok += tambah;
-                cout << "Stok berhasil ditambah. Stok sekarang: " << current->jumlahStok << endl;
-            } else {
-                cout << "Jumlah harus lebih dari 0!" << endl;
-            }
+    void tambahStok(const string& namaMenu, int jumlah) {
+        if (jumlah <= 0) {
+            cout << "Jumlah harus lebih dari 0!" << endl;
             return;
         }
-        current = current->next;
+        MenuNode* current = head;
+        while (current != nullptr) {
+            if (current->namaMenu == namaMenu) {
+                current->jumlahStok += jumlah;
+                cout << "Stok " << namaMenu << " ditambah " << jumlah << "." << endl;
+                cout << "Stok sekarang: " << current->jumlahStok << endl;
+                return;
+            }
+            current = current->next;
+        }
+        cout << "Menu " << namaMenu << " tidak ditemukan." << endl;
     }
-    cout << "Menu tidak ditemukan." << endl;
-}
 
-// Fungsi untuk mengubah harga menu
-void ubahHargaMenu(menuMerchant* head, string namaMenu) {
-    menuMerchant* current = head;
-    while (current != nullptr) {
-        if (current->namaMenu == namaMenu) {
-            int hargaBaru;
-            cout << "Masukkan harga baru: ";
-            cin >> hargaBaru;
-            if (hargaBaru > 0) {
+    void kurangiStokManual(const string& namaMenu, int jumlah) {
+        if (jumlah <= 0) {
+            cout << "Jumlah harus lebih dari 0!" << endl;
+            return;
+        }
+        MenuNode* current = head;
+        while (current != nullptr) {
+            if (current->namaMenu == namaMenu) {
+                if (current->jumlahStok >= jumlah) {
+                    current->jumlahStok -= jumlah;
+                    cout << "Stok " << namaMenu << " dikurangi " << jumlah << "." << endl;
+                    cout << "Stok sekarang: " << current->jumlahStok << endl;
+                } else {
+                    cout << "Stok tidak cukup!" << endl;
+                }
+                return;
+            }
+            current = current->next;
+        }
+        cout << "Menu " << namaMenu << " tidak ditemukan." << endl;
+    }
+
+    void kosongkanStok(const string& namaMenu) {
+        MenuNode* current = head;
+        while (current != nullptr) {
+            if (current->namaMenu == namaMenu) {
+                if (current->jumlahStok > 0) {
+                    current->jumlahStok = 0;
+                    cout << "Stok " << namaMenu << " telah dikosongkan." << endl;
+                    cout << "Stok sekarang: " << current->jumlahStok << endl;
+                } else {
+                    cout << "Stok " << namaMenu << " sudah kosong!" << endl;
+                }
+                return;
+            }
+            current = current->next;
+        }
+        cout << "Menu " << namaMenu << " tidak ditemukan." << endl;
+    }
+
+    void ubahHarga(const string& namaMenu, int hargaBaru) {
+        if (hargaBaru <= 0) {
+            cout << "Harga harus lebih dari 0!" << endl;
+            return;
+        }
+        MenuNode* current = head;
+        while (current != nullptr) {
+            if (current->namaMenu == namaMenu) {
                 current->hargaMenu = hargaBaru;
-                cout << "Harga berhasil diubah. Harga sekarang: Rp" << current->hargaMenu << endl;
-            } else {
-                cout << "Harga harus lebih dari 0!" << endl;
+                cout << "Harga " << namaMenu << " diubah menjadi Rp" << hargaBaru << endl;
+                return;
             }
-            return;
+            current = current->next;
         }
-        current = current->next;
-    }
-    cout << "Menu tidak ditemukan." << endl;
-}
-
-// Fungsi untuk mengosongkan stok
-void kosongkanStok(menuMerchant* head, const string& namaMenu) {
-    menuMerchant* current = head;
-    while (current != nullptr) {
-        if (current->namaMenu == namaMenu) {
-            current->jumlahStok = 0;
-            cout << "Stok menu \"" << namaMenu << "\" telah dikosongkan." << endl;
-            return;
-        }
-        current = current->next;
-    }
-    cout << "Menu tidak ditemukan." << endl;
-}
-
-// Fungsi untuk mengubah stok
-void ubahStok(menuMerchant* head, string namaMenu) {
-    int pilih;
-    cout << "Mengubah Stok" << endl;
-    cout << "1. Tambah Stok" << endl;
-    cout << "2. Kurangi Stok" << endl;
-    cout << "3. Kosongkan Stok" << endl;
-    cout << "Pilih opsi: ";
-    cin >> pilih;
-
-    int jumlah;
-    switch (pilih) {
-        case 1:
-            tambahStokMenu(head, namaMenu);
-            break;
-        case 2:
-            cout << "Masukkan jumlah yang ingin dikurangi: ";
-            cin >> jumlah;
-            kurangiStok(head, namaMenu, jumlah);
-            break;
-        case 3:
-            kosongkanStok(head, namaMenu);
-            break;
-        default:
-            cout << "Pilihan tidak valid!" << endl;
-    }
-}
-
-// Fungsi untuk mengubah menu berdasarkan nomor
-void ubahMenu(menuMerchant*& head, menuMerchant*& tail, int nomorMenu) {
-    menuMerchant* selectedMenu = getMenuByNumber(head, nomorMenu);
-    if (selectedMenu == nullptr) {
-        cout << "Nomor menu tidak valid!" << endl;
-        return;
-    }
-    string namaMenu = selectedMenu->namaMenu;
-
-    int pilihan;
-    do {
-        cout << "\n=== Menu Edit Menu Merchant ===" << endl;
-        cout << "Menu yang dipilih: " << namaMenu << endl;
-        cout << "1. Hapus Menu" << endl;
-        cout << "2. Ubah Stok Menu" << endl;
-        cout << "3. Ubah Harga Menu" << endl;
-        cout << "4. Kembali" << endl;
-        cout << "Pilih opsi (1-4): ";
-        cin >> pilihan;
-        cin.ignore();
-
-        switch (pilihan) {
-            case 1:
-                deleteMenu(head, namaMenu);
-                return; // Keluar setelah hapus
-            case 2:
-                ubahStok(head, namaMenu);
-                break;
-            case 3:
-                ubahHargaMenu(head, namaMenu);
-                break;
-            case 4:
-                cout << "Kembali ke menu sebelumnya." << endl;
-                break;
-            default:
-                cout << "Pilihan tidak valid!" << endl;
-        }
-    } while (pilihan != 4);
-}
-
-// Fungsi untuk menambah menu baru
-void tambahMenu(menuMerchant*& head, menuMerchant*& tail) {
-    string namaMenu;
-    int jumlahStok, hargaMenu;
-    cout << "Masukkan nama menu: ";
-    cin.ignore();
-    getline(cin, namaMenu);
-    cout << "Masukkan jumlah stok: ";
-    cin >> jumlahStok;
-    cout << "Masukkan Harga: ";
-    cin >> hargaMenu;
-
-    addMenu(head, tail, namaMenu, jumlahStok, hargaMenu);
-    cout << "Menu " << namaMenu << " ditambahkan." << endl;
-}
-
-// Fungsi untuk menampilkan semua menu
-void displayMenu(menuMerchant* head) {
-    if (head == nullptr) {
-        cout << "Daftar menu kosong!" << endl;
-        return;
-    }
-    int i = 1;
-    cout << "\nDaftar Menu:" << endl;
-    while (head != nullptr) {
-        cout << i++ << ". " << head->namaMenu << " (Stok: " << head->jumlahStok
-             << ") Harga: Rp" << head->hargaMenu << endl;
-        head = head->next;
-    }
-}
-
-// Fungsi untuk menampilkan riwayat pesanan
-void displayHistory() {
-    if (historyCount == 0) {
-        cout << "Riwayat pesanan kosong!" << endl;
-        return;
+        cout << "Menu " << namaMenu << " tidak ditemukan." << endl;
     }
 
-    cout << "\nRiwayat Pesanan:" << endl;
-    cout << "----------------" << endl;
-    for (int i = 0; i < historyCount; i++) {
-        cout << "Pesanan ke-" << (i + 1) << ":" << endl;
-        cout << "Nama: " << history[i].nama << endl;
-        cout << "Pesanan: " << history[i].pesanan << endl;
-        cout << "Nomor Antrian: " << history[i].nomorAntrian << endl;
-        cout << "Jumlah: " << history[i].jumlah << endl;
-        cout << "Total Harga: Rp" << history[i].totalHarga << endl;
-        cout << "Uang Dibayar: Rp" << history[i].uangDibayar << endl;
-        cout << "Kembalian: Rp" << history[i].kembalian << endl;
-        cout << "----------------" << endl;
-    }
-}
-
-// Fungsi untuk input data pelanggan dan proses pembayaran
-bool inputCustomer(Queue &q, menuMerchant* head) {
-    string nama;
-    int pilihanMenu, jumlah;
-
-    cout << "Masukkan nama pelanggan: ";
-    cin.ignore();
-    getline(cin, nama);
-
-    displayMenu(head);
-    cout << "Pilih nomor menu: ";
-    cin >> pilihanMenu;
-    cout << "Masukkan jumlah pesanan: ";
-    cin >> jumlah;
-
-    if (jumlah <= 0) {
-        cout << "Jumlah pesanan harus lebih dari 0!" << endl;
-        return false;
-    }
-
-    int index = 1;
-    string menuTerpilih;
-    int hargaMenu = 0;
-    bool menuDitemukan = false;
-    menuMerchant* current = head;
-
-    while (current != nullptr) {
-        if (index == pilihanMenu) {
-            menuTerpilih = current->namaMenu;
-            hargaMenu = current->hargaMenu;
-            menuDitemukan = true;
-            break;
-        }
-        current = current->next;
-        index++;
-    }
-
-    if (!menuDitemukan) {
-        cout << "Pilihan menu tidak valid!" << endl;
-        return false;
-    }
-
-    if (cekStok(head, menuTerpilih, jumlah)) {
-        int totalHarga = jumlah * hargaMenu;
-        cout << "Total pembayaran: Rp" << totalHarga << endl;
-        int uangDibayar;
-        cout << "Masukkan jumlah uang yang dibayar: Rp";
-        cin >> uangDibayar;
-
-        if (uangDibayar >= totalHarga) {
-            int kembalian = uangDibayar - totalHarga;
-            cout << "Pembayaran berhasil! Kembalian: Rp" << kembalian << endl;
-            enqueue(q, nama, menuTerpilih, jumlah, totalHarga, uangDibayar, kembalian);
-            kurangiStok(head, menuTerpilih, jumlah);
-            return true;
+    void kurangiStok(const string& namaMenu, int jumlah) {
+        if (cekStok(namaMenu, jumlah)) {
+            MenuNode* current = head;
+            while (current != nullptr) {
+                if (current->namaMenu == namaMenu) {
+                    current->jumlahStok -= jumlah;
+                    cout << "Stok " << namaMenu << " berkurang " << jumlah << endl;
+                    return;
+                }
+                current = current->next;
+            }
         } else {
-            cout << "Uang yang dibayar kurang! Pembayaran gagal." << endl;
+            cout << "Stok tidak cukup atau menu tidak ditemukan." << endl;
+        }
+    }
+
+    bool cekMenu(const string& namaMenu) const {
+        MenuNode* current = head;
+        while (current != nullptr) {
+            if (current->namaMenu == namaMenu) return true;
+            current = current->next;
+        }
+        return false;
+    }
+
+    bool cekStok(const string& namaMenu, int jumlah) const {
+        MenuNode* current = head;
+        while (current != nullptr) {
+            if (current->namaMenu == namaMenu) return current->jumlahStok >= jumlah;
+            current = current->next;
+        }
+        return false;
+    }
+
+    int getHarga(const string& namaMenu) const {
+        MenuNode* current = head;
+        while (current != nullptr) {
+            if (current->namaMenu == namaMenu) return current->hargaMenu;
+            current = current->next;
+        }
+        return 0;
+    }
+
+    MenuNode* getMenuByNumber(int nomor) const {
+        int index = 1;
+        MenuNode* current = head;
+        while (current != nullptr) {
+            if (index == nomor) return current;
+            current = current->next;
+            index++;
+        }
+        return nullptr;
+    }
+
+    void displayMenu() const {
+        if (head == nullptr) {
+            cout << "Daftar menu kosong!" << endl;
+            return;
+        }
+        cout << "\nDaftar Menu:" << endl;
+        MenuNode* current = head;
+        int i = 1;
+        while (current != nullptr) {
+            cout << i++ << ". " << current->namaMenu << " (Stok: " << current->jumlahStok
+                 << ") Harga: Rp" << current->hargaMenu << endl;
+            current = current->next;
+        }
+    }
+
+    void displayMenuPelanggan() const {
+        if (head == nullptr) {
+            cout << "Daftar menu kosong!" << endl;
+            return;
+        }
+        cout << "\nDaftar Menu:" << endl;
+        MenuNode* current = head;
+        int i = 1;
+        bool adaMenu = false;
+        while (current != nullptr) {
+            cout << i++ << ". " << current->namaMenu << " (Stok: " << current->jumlahStok;
+            if (current->jumlahStok == 0) {
+                cout << " - Habis";
+            }
+            cout << ") Harga: Rp" << current->hargaMenu << endl;
+            if (current->jumlahStok > 0) {
+                adaMenu = true;
+            }
+            current = current->next;
+        }
+        if (!adaMenu) {
+            cout << "Tidak ada menu dengan stok tersedia!" << endl;
+        }
+    }
+
+    void clear() {
+        while (head != nullptr) {
+            MenuNode* temp = head;
+            head = head->next;
+            delete temp;
+        }
+        tail = nullptr;
+    }
+};
+
+// Class untuk merepresentasikan merchant
+class Merchant {
+private:
+    string nama;
+    MenuList menuList;
+    Queue queue;
+
+public:
+    Merchant(const string& _nama) : nama(_nama) {}
+
+    void initializeMenu() {
+        if (nama == "Merchant 1") {
+            menuList.addMenu("Rice Bowl", 10, 13000);
+            menuList.addMenu("Air Putih", 8, 3000);
+            menuList.addMenu("Soto Sapi", 9, 12000);
+            menuList.addMenu("Soto Ayam", 10, 12000);
+            menuList.addMenu("Soto Babi", 12, 12000);
+        } else if (nama == "Merchant 2") {
+            menuList.addMenu("Babi Guling", 10, 15000);
+            menuList.addMenu("Ayam Panggang", 6, 12000);
+        }
+    }
+
+    string getNama() const { return nama; }
+    MenuList& getMenuList() { return menuList; }
+    Queue& getQueue() { return queue; }
+};
+
+// Class untuk mengelola sistem kantin
+class CanteenSystem {
+private:
+    Merchant merchants[2]; // Array untuk dua merchant
+    OrderHistory* history; // Pointer untuk riwayat pesanan
+    int historyCount;
+    bool hasOrdered[2]; // Array untuk melacak status pemesanan per merchant
+
+    // Validasi input angka
+    int inputNumber(const string& prompt) {
+        int value;
+        cout << prompt;
+        while (!(cin >> value)) {
+            cout << "Input tidak valid. Masukkan angka: ";
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+        return value;
+    }
+
+    // Fungsi untuk input pesanan pelanggan
+    bool inputCustomer(Merchant& merchant, int merchantIndex) {
+        string nama;
+        cout << "Masukkan nama pelanggan: ";
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        getline(cin, nama);
+        if (nama.empty()) {
+            cout << "Nama tidak boleh kosong!" << endl;
             return false;
         }
-    } else {
-        cout << "Maaf, stok " << menuTerpilih << " tidak cukup untuk " << jumlah << " pesanan!" << endl;
-        return false;
-    }
-}
 
-// Fungsi untuk menu pelanggan
-void customerMenu(int merchantPilihan) {
-    Queue* q = (merchantPilihan == 1) ? &queue1 : &queue2;
-    menuMerchant* head = (merchantPilihan == 1) ? head1 : head2;
-    bool hasOrdered = false;
-
-    int pilihan;
-    do {
-        displayMenu(head);
-        cout << "\n=== Menu Pelanggan ===" << endl;
-        cout << "1. Pesan Menu" << endl;
-        if (hasOrdered) {
-            cout << "2. Lihat Antrian" << endl;
-            cout << "3. Kembali" << endl;
-        } else {
-            cout << "2. Kembali" << endl;
+        merchant.getMenuList().displayMenuPelanggan();
+        int pilihanMenu = inputNumber("Pilih nomor menu: ");
+        MenuNode* selected = merchant.getMenuList().getMenuByNumber(pilihanMenu);
+        if (!selected) {
+            cout << "Pilihan menu tidak valid!" << endl;
+            return false;
         }
-        cout << "Pilih opsi: ";
-        cin >> pilihan;
+        string menuTerpilih = selected->namaMenu;
 
-        // Adjust pilihan based on whether Lihat Antrian is available
-        if (!hasOrdered && pilihan == 2) {
-            pilihan = 3; // Map to Kembali
+        // Validasi stok menu sebelum melanjutkan
+        if (selected->jumlahStok == 0) {
+            cout << "Maaf, stok " << menuTerpilih << " sudah habis!" << endl;
+            return false;
         }
 
-        switch (pilihan) {
-            case 1:
-                if (inputCustomer(*q, head)) {
-                    hasOrdered = true;
-                }
-                break;
-            case 2:
-                if (hasOrdered) {
-                    displayQueue(*q);
-                }
-                break;
-            case 3:
-                cout << "Kembali ke menu sebelumnya." << endl;
-                break;
-            default:
-                cout << "Pilihan tidak valid!" << endl;
+        int jumlah = inputNumber("Masukkan jumlah pesanan: ");
+        if (jumlah <= 0) {
+            cout << "Jumlah pesanan harus lebih dari 0!" << endl;
+            return false;
         }
-    } while (pilihan != 3);
-}
 
-// Fungsi untuk menu merchant
-void merchantMenu(int merchantPilihan) {
-    menuMerchant* head = (merchantPilihan == 1) ? head1 : head2;
-    menuMerchant* tail = (merchantPilihan == 1) ? tail1 : tail2;
-    Queue* q = (merchantPilihan == 1) ? &queue1 : &queue2;
-
-    int pilihan;
-    do {
-        cout << "\n=== Menu Merchant " << merchantPilihan << " ===" << endl;
-        cout << "1. Confirm Antrian" << endl;
-        cout << "2. Tampilkan Antrian" << endl;
-        cout << "3. Tampilkan Daftar Menu" << endl;
-        cout << "4. Riwayat Pesanan" << endl;
-        cout << "5. Kembali" << endl;
-        cout << "Pilih opsi (1-5): ";
-        cin >> pilihan;
-
-        switch (pilihan) {
-            case 1:
-                dequeue(*q);
-                break;
-            case 2:
-                displayQueue(*q);
-                break;
-            case 3: {
-                displayMenu(head);
-                cout << "\nSub-Menu Daftar Menu:" << endl;
-                cout << "1. Tambah Menu" << endl;
-                cout << "2. Ubah Menu" << endl;
-                cout << "3. Kembali" << endl;
-                cout << "Pilih opsi (1-3): ";
-                int subPilihan;
-                cin >> subPilihan;
-                switch (subPilihan) {
-                    case 1:
-                        tambahMenu(head, tail);
-                        break;
-                    case 2: {
-                        int nomorMenu;
-                        cout << "Masukkan nomor menu: ";
-                        cin >> nomorMenu;
-                        ubahMenu(head, tail, nomorMenu);
-                        break;
-                    }
-                    case 3:
-                        break;
-                    default:
-                        cout << "Pilihan tidak valid!" << endl;
-                }
-                break;
+        if (merchant.getMenuList().cekStok(menuTerpilih, jumlah)) {
+            int totalHarga = jumlah * merchant.getMenuList().getHarga(menuTerpilih);
+            cout << "Total pembayaran: Rp" << totalHarga << endl;
+            int uangDibayar = inputNumber("Masukkan jumlah uang yang dibayar: Rp");
+            if (uangDibayar < totalHarga) {
+                cout << "Uang yang dibayar kurang! Pembayaran gagal." << endl;
+                return false;
             }
-            case 4:
-                displayHistory();
-                break;
-            case 5:
-                cout << "Kembali ke menu sebelumnya." << endl;
-                break;
-            default:
-                cout << "Pilihan tidak valid!" << endl;
+            int kembalian = uangDibayar - totalHarga;
+            cout << "Pembayaran berhasil! Kembalian: Rp" << kembalian << endl;
+            merchant.getQueue().enqueue(nama, menuTerpilih, jumlah, totalHarga, uangDibayar, kembalian);
+            merchant.getMenuList().kurangiStok(menuTerpilih, jumlah);
+            hasOrdered[merchantIndex - 1] = true; // Tandai bahwa pelanggan telah memesan
+            return true;
+        } else {
+            cout << "Maaf, stok " << menuTerpilih << " tidak cukup untuk " << jumlah << " pesanan!" << endl;
+            return false;
         }
-    } while (pilihan != 5);
-}
+    }
 
-// Fungsi utama
-int main() {
-    // Inisialisasi antrian
-    initQueue(queue1);
-    initQueue(queue2);
+    // Fungsi untuk sub-menu pengelolaan stok
+    void manageStock(Merchant& merchant, const string& namaMenu) {
+        int pilihan;
+        do {
+            cout << "\n=== Pengaturan Stok untuk " << namaMenu << " ===" << endl;
+            cout << "1. Tambah Stok" << endl;
+            cout << "2. Kurangi Stok" << endl;
+            cout << "3. Kosongkan Stok" << endl;
+            cout << "4. Kembali" << endl;
+            cout << "Pilih opsi (1-4): ";
+            pilihan = inputNumber("");
 
-    // Inisialisasi daftar menu
-    addMenu(head1, tail1, "Rice Bowl", 10, 13000);
-    addMenu(head1, tail1, "Air Putih", 8, 3000);
-    addMenu(head1, tail1, "Soto Sapi", 9, 12000);
-    addMenu(head1, tail1, "Soto Ayam", 100, 12000);
-    addMenu(head1, tail1, "Soto Babi", 12, 12000);
-
-    addMenu(head2, tail2, "Babi Guling", 10, 15000);
-    addMenu(head2, tail2, "Ayam Panggang", 6, 12000);
-
-    int role;
-    do {
-        cout << "\n=== Sistem Antrian Kantin ===" << endl;
-        cout << "Pilih peran:" << endl;
-        cout << "1. Merchant 1" << endl;
-        cout << "2. Merchant 2" << endl;
-        cout << "3. Pelanggan" << endl;
-        cout << "4. Keluar" << endl;
-        cout << "Pilih opsi: ";
-        cin >> role;
-
-        if (role == 1) {
-            merchantMenu(1);
-        } else if (role == 2) {
-            merchantMenu(2);
-        } else if (role == 3) {
-            int merchantPilihan;
-            cout << "\nPilih Merchant:" << endl;
-            cout << "1. Merchant 1" << endl;
-            cout << "2. Merchant 2" << endl;
-            cout << "3. Kembali" << endl;
-            cout << "Pilih opsi: ";
-            cin >> merchantPilihan;
-            if (merchantPilihan == 1 || merchantPilihan == 2) {
-                customerMenu(merchantPilihan);
-            } else if (merchantPilihan == 3) {
-                cout << "Kembali ke menu sebelumnya." << endl;
+            if (pilihan == 1) {
+                int jumlah = inputNumber("Masukkan jumlah stok: ");
+                merchant.getMenuList().tambahStok(namaMenu, jumlah);
+            } else if (pilihan == 2) {
+                int jumlah = inputNumber("Masukkan jumlah stok: ");
+                merchant.getMenuList().kurangiStokManual(namaMenu, jumlah);
+            } else if (pilihan == 3) {
+                merchant.getMenuList().kosongkanStok(namaMenu);
+            } else if (pilihan == 4) {
+                cout << "Kembali ke menu ubah menu." << endl;
             } else {
                 cout << "Pilihan tidak valid!" << endl;
             }
-        } else if (role == 4) {
-            cout << "Terima kasih! Program selesai." << endl;
-        } else {
-            cout << "Pilihan tidak valid!" << endl;
+        } while (pilihan != 4);
+    }
+
+    // Fungsi untuk sub-menu ubah menu
+    void modifyMenu(Merchant& merchant, int nomorMenu) {
+        MenuNode* selected = merchant.getMenuList().getMenuByNumber(nomorMenu);
+        if (!selected) {
+            cout << "Nomor menu tidak valid!" << endl;
+            return;
         }
-    } while (role != 4);
+        string namaMenu = selected->namaMenu;
+        int pilihan;
+        do {
+            cout << "\n=== Ubah Menu: " << namaMenu << " ===" << endl;
+            cout << "1. Hapus Menu" << endl;
+            cout << "2. Pengaturan Stok" << endl;
+            cout << "3. Ubah Harga" << endl;
+            cout << "4. Kembali" << endl;
+            cout << "Pilih opsi (1-4): ";
+            pilihan = inputNumber("");
 
-    // Membersihkan memori
-    while (!isEmpty(queue1)) {
-        Customer* temp = queue1.depan;
-        queue1.depan = queue1.depan->next;
-        delete temp;
-        if (queue1.depan == nullptr) queue1.belakang = nullptr;
-    }
-    while (!isEmpty(queue2)) {
-        Customer* temp = queue2.depan;
-        queue2.depan = queue2.depan->next;
-        delete temp;
-        if (queue2.depan == nullptr) queue2.belakang = nullptr;
-    }
-
-    while (head1 != nullptr) {
-        menuMerchant* temp = head1;
-        head1 = head1->next;
-        delete temp;
+            if (pilihan == 1) {
+                merchant.getMenuList().deleteMenu(namaMenu);
+                return; // Keluar setelah hapus untuk menghindari akses menu yang sudah dihapus
+            } else if (pilihan == 2) {
+                manageStock(merchant, namaMenu);
+            } else if (pilihan == 3) {
+                int hargaBaru = inputNumber("Masukkan harga baru: ");
+                merchant.getMenuList().ubahHarga(namaMenu, hargaBaru);
+            } else if (pilihan == 4) {
+                cout << "Kembali ke menu kelola menu." << endl;
+            } else {
+                cout << "Pilihan tidak valid!" << endl;
+            }
+        } while (pilihan != 4);
     }
 
-    while (head2 != nullptr) {
-        menuMerchant* temp = head2;
-        head2 = head2->next;
-        delete temp;
+    // Fungsi untuk sub-menu pengelolaan menu
+    void manageMenu(Merchant& merchant) {
+        int pilihan;
+        do {
+            merchant.getMenuList().displayMenu();
+            cout << "\n=== Kelola Menu ===" << endl;
+            cout << "1. Tambah Menu" << endl;
+            cout << "2. Ubah Menu" << endl;
+            cout << "3. Kembali" << endl;
+            cout << "Pilih opsi (1-3): ";
+            pilihan = inputNumber("");
+
+            if (pilihan == 1) {
+                string nama;
+                cout << "Masukkan nama menu: ";
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                getline(cin, nama);
+                int stok = inputNumber("Masukkan jumlah stok: ");
+                int harga = inputNumber("Masukkan harga: ");
+                merchant.getMenuList().addMenu(nama, stok, harga);
+            } else if (pilihan == 2) {
+                merchant.getMenuList().displayMenu();
+                int nomorMenu = inputNumber("Pilih nomor menu untuk diubah: ");
+                modifyMenu(merchant, nomorMenu);
+            } else if (pilihan == 3) {
+                cout << "Kembali ke menu merchant." << endl;
+            } else {
+                cout << "Pilihan tidak valid!" << endl;
+            }
+        } while (pilihan != 3);
     }
 
+    // Fungsi untuk menu pelanggan
+    void customerMenu(int merchantPilihan) {
+        if (merchantPilihan < 1 || merchantPilihan > 2) {
+            cout << "Pilihan merchant tidak valid!" << endl;
+            return;
+        }
+        Merchant& merchant = merchants[merchantPilihan - 1];
+        int pilihan;
+        do {
+            merchant.getMenuList().displayMenuPelanggan();
+            cout << "\n=== Menu Pelanggan ===" << endl;
+            cout << "1. Pesan Menu" << endl;
+            if (hasOrdered[merchantPilihan - 1]) {
+                cout << "2. Lihat Antrian" << endl;
+                cout << "3. Kembali" << endl;
+                cout << "Pilih opsi (1-3): ";
+            } else {
+                cout << "2. Kembali" << endl;
+                cout << "Pilih opsi (1-2): ";
+            }
+            pilihan = inputNumber("");
+
+            if (pilihan == 1) {
+                inputCustomer(merchant, merchantPilihan);
+            } else if (pilihan == 2 && hasOrdered[merchantPilihan - 1]) {
+                merchant.getQueue().displayQueue();
+            } else if ((pilihan == 2 && !hasOrdered[merchantPilihan - 1]) || (pilihan == 3 && hasOrdered[merchantPilihan - 1])) {
+                cout << "Kembali ke menu utama." << endl;
+                break;
+            } else {
+                cout << "Pilihan tidak valid!" << endl;
+            }
+        } while (true);
+    }
+
+    // Fungsi untuk menu merchant
+    void merchantMenu(int merchantPilihan) {
+        if (merchantPilihan < 1 || merchantPilihan > 2) {
+            cout << "Pilihan merchant tidak valid!" << endl;
+            return;
+        }
+        Merchant& merchant = merchants[merchantPilihan - 1];
+        int pilihan;
+        do {
+            cout << "\n=== Menu Merchant " << merchant.getNama() << " ===" << endl;
+            cout << "1. Konfirmasi Antrian" << endl;
+            cout << "2. Tampilkan Antrian" << endl;
+            cout << "3. Tampilkan Daftar Menu" << endl;
+            cout << "4. Lihat Riwayat Pesanan" << endl;
+            cout << "5. Kembali" << endl;
+            cout << "Pilih opsi (1-5): ";
+            pilihan = inputNumber("");
+
+            if (pilihan == 1) {
+                Customer* pelanggan = merchant.getQueue().dequeue();
+                if (pelanggan && historyCount < 100) {
+                    history[historyCount] = OrderHistory(
+                        pelanggan->nama,
+                        pelanggan->pesanan,
+                        pelanggan->nomorAntrian,
+                        pelanggan->jumlah,
+                        pelanggan->totalHarga,
+                        pelanggan->uangDibayar,
+                        pelanggan->kembalian,
+                        merchant.getNama()
+                    );
+                    historyCount++;
+                    delete pelanggan;
+                }
+            } else if (pilihan == 2) {
+                merchant.getQueue().displayQueue();
+            } else if (pilihan == 3) {
+                manageMenu(merchant);
+            } else if (pilihan == 4) {
+                if (historyCount == 0) {
+                    cout << "Riwayat pesanan kosong!" << endl;
+                } else {
+                    cout << "\nRiwayat Pesanan:" << endl;
+                    cout << "----------------" << endl;
+                    bool found = false;
+                    for (int i = 0; i < historyCount; i++) {
+                        if (history[i].getMerchant() == merchant.getNama()) {
+                            cout << "Pesanan ke-" << (i + 1) << endl;
+                            cout << "Nama: " << history[i].getNama() << endl;
+                            cout << "Pesanan: " << history[i].getPesanan() << endl;
+                            cout << "Nomor Antrian: " << history[i].getNomorAntrian() << endl;
+                            cout << "Jumlah: " << history[i].getJumlah() << endl;
+                            cout << "Total Harga: Rp" << history[i].getTotalHarga() << endl;
+                            cout << "Uang Dibayar: Rp" << history[i].getUangDibayar() << endl;
+                            cout << "Kembalian: Rp" << history[i].getKembalian() << endl;
+                            cout << "Merchant: " << history[i].getMerchant() << endl;
+                            cout << "----------------" << endl;
+                            found = true;
+                        }
+                    }
+                    if (!found) {
+                        cout << "Tidak ada riwayat untuk merchant ini." << endl;
+                    }
+                }
+            } else if (pilihan == 5) {
+                cout << "Kembali ke menu utama." << endl;
+            } else {
+                cout << "Pilihan tidak valid!" << endl;
+            }
+        } while (pilihan != 5);
+    }
+
+public:
+    CanteenSystem() : merchants{Merchant("Merchant 1"), Merchant("Merchant 2")}, historyCount(0) {
+        history = new OrderHistory[100]; // Alokasi dinamis untuk riwayat
+        for (int i = 0; i < 2; i++) {
+            merchants[i].initializeMenu();
+            hasOrdered[i] = false; // Inisialisasi status pemesanan
+        }
+    }
+
+    ~CanteenSystem() {
+        // Bersihkan memori
+        delete[] history; // Bebaskan memori riwayat
+        for (int i = 0; i < 2; i++) {
+            merchants[i].getQueue().clear();
+            merchants[i].getMenuList().clear();
+        }
+    }
+
+    void run() {
+        int role;
+        do {
+            cout << "\n=== Sistem Antrian Kantin ===" << endl;
+            cout << "1. Pelanggan" << endl;
+            cout << "2. Merchant" << endl;
+            cout << "3. Keluar" << endl;
+            cout << "Pilih opsi (1-3): ";
+            role = inputNumber("");
+
+            if (role == 1) {
+                int merchantPilihan;
+                cout << "\nPilih Merchant:" << endl;
+                cout << "1. Merchant 1" << endl;
+                cout << "2. Merchant 2" << endl;
+                cout << "3. Kembali" << endl;
+                merchantPilihan = inputNumber("Pilih opsi (1-3): ");
+                if (merchantPilihan == 1 || merchantPilihan == 2) {
+                    customerMenu(merchantPilihan);
+                } else if (merchantPilihan == 3) {
+                    cout << "Kembali ke menu utama." << endl;
+                } else {
+                    cout << "Pilihan tidak valid!" << endl;
+                }
+            } else if (role == 2) {
+                int merchantPilihan;
+                cout << "\nPilih Merchant:" << endl;
+                cout << "1. Merchant 1" << endl;
+                cout << "2. Merchant 2" << endl;
+                cout << "3. Kembali" << endl;
+                merchantPilihan = inputNumber("Pilih opsi (1-3): ");
+                if (merchantPilihan == 1 || merchantPilihan == 2) {
+                    merchantMenu(merchantPilihan);
+                } else if (merchantPilihan == 3) {
+                    cout << "Kembali ke menu utama." << endl;
+                } else {
+                    cout << "Pilihan tidak valid!" << endl;
+                }
+            } else if (role == 3) {
+                cout << "Terima kasih! Program selesai." << endl;
+            } else {
+                cout << "Pilihan tidak valid!" << endl;
+            }
+        } while (role != 3);
+    }
+};
+
+int main() {
+    CanteenSystem system;
+    system.run();
     return 0;
 }
