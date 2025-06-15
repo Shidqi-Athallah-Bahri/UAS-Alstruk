@@ -509,6 +509,8 @@ void customerMenu(int merchantPilihan) {
     } while (pilihan != 3);
 }
 
+
+
 void merchantMenu(int merchantPilihan) {
     MenuList& menuList = (merchantPilihan == 1) ? merchant1Menu : merchant2Menu;
     Queue& q = (merchantPilihan == 1) ? queue1 : queue2;
